@@ -145,7 +145,20 @@ function handleDatabaseError(err, res) {
   console.error("Database error:", err);
   res.status(500).render("error", { message: "An error occurred while accessing the database." });
 }
+/**
+ * POST /delete-course
+ * handles deleting a course by its ID
+ */
+app.post("/delete-course", async (req, res) => {
+  const { courseid } = req.body;
 
+  try {
+    await client.query("DELETE FROM courses WHERE id = $1", [courseid]);
+    res.redirect("/");
+  } catch (err) {
+    handleDatabaseError(err, res);
+  }
+});
 // --- start the server ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
