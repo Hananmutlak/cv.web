@@ -53,11 +53,13 @@ app.get("/", async (req, res) => {
  * GET /add-course
  * shows the form to add a new course
  */
-app.get("/add-course", (req, res) => {
-  res.render("add-course", { error: null, values: {} });
-});
 app.get("/about", (req, res) => {
-  res.render("about");
+  const dbInfo = {
+    type: "PostgreSQL",
+    host: process.env.DB_HOST
+  };
+
+  res.render("about", { dbInfo });
 });
 
 /**
