@@ -56,6 +56,9 @@ app.get("/", async (req, res) => {
 app.get("/add-course", (req, res) => {
   res.render("add-course", { error: null, values: {} });
 });
+app.get("/about", (req, res) => {
+  res.render("about");
+});
 
 /**
  * POST /add-course
@@ -98,8 +101,8 @@ function validateCourseInput(data) {
   const { coursecode, coursename, syllabus, progression } = data;
 
   // check code like DT207G
-  if (!/^[A-Z]{2}\d{4}$/.test(coursecode)) {
-    errors.push("Invalid course code format (e.g. DT207G)");
+  if (!/^[A-Z]{2}\d{3}[A-Z]$/.test(coursecode)) {
+    errors.push("Course code must follow format (e.g. DT207G)");
   }
 
   if (!coursename?.trim() || coursename.length < 3) {
