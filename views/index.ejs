@@ -30,7 +30,8 @@
               <td><a href="<%= course.syllabus %>" target="_blank">Visa plan</a></td>
               <td><%= course.progression %></td>
               <td>
-                <form action="/delete-course/<%= course.id %>" method="POST" onsubmit="return confirm('Är du säker på att du vill radera den här kursen?')">
+                <form action="/delete-course" method="POST" onsubmit="return confirm('Är du säker på att du vill radera den här kursen?')">
+                  <input type="hidden" name="courseid" value="<%= course.id %>">
                   <button type="submit" class="delete-btn">Radera</button>
                 </form>
               </td>
