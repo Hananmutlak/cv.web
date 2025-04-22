@@ -53,6 +53,9 @@ app.get("/", async (req, res) => {
  * GET /add-course
  * shows the form to add a new course
  */
+app.get("/add-course", (req, res) => {
+  res.render("add-course", { error: null, values: {} });
+});
 app.get("/about", (req, res) => {
   const dbInfo = {
     type: "PostgreSQL",
