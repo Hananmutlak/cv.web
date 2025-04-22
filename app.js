@@ -1,24 +1,22 @@
 /**
  * Course Management System - Main Server File
- * Implements CRUD operations for courses
+ * Here wi  handle CRUD ops for courses using Express and Postgres
  */
 
-// Required modules
+// --- importing modules we need ---
 const express = require("express");
 const { Client } = require("pg");
 require("dotenv").config();
 const path = require("path");
 
-// Initialize Express app
+// --- express app setup ---
 const app = express();
+app.set("view engine", "ejs"); //i use EJS to render the pages
+app.set("views", path.join(__dirname, "views")); // folder for views
+app.use(express.static(path.join(__dirname, "public"))); // public folder for css/images etc
+app.use(express.urlencoded({ extended: true })); // this lets me grab form data
 
-// Configuration
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-app.use(express.static(path.join(__dirname, "public")));
-app.use(express.urlencoded({ extended: true }));
-
-// Database configuration
+// --- connect to PostgreSQL db ---
 const client = new Client({
   user: process.env.DB_USERNAME,
   host: process.env.DB_HOST,
@@ -31,127 +29,118 @@ const client = new Client({
   }
 });
 
-// Connect to database
 client.connect()
-  .then(() => console.log(" Connected to PostgreSQL database"))
-  .catch(err => console.error(" Connection error", err));
+  .then(() => console.log("Connected to PostgreSQL"))
+  .catch(err => console.error("Connection failed:", err));
 
-// Routes
-// Home route - Show all courses
+// --- Routes start here ---
+
+/**
+ * GET /
+ * home page - show all courses from db
+ */
 app.get("/", async (req, res) => {
   try {
-    const result = await client.query(`
-      SELECT * FROM courses 
-      ORDER BY created_at DESC
-    `);
+    const result = await client.query("SELECT * FROM courses ORDER BY created_at DESC");
     res.render("index", { courses: result.rows });
   } catch (error) {
-    console.error("Database error:", error);
-    res.status(500).render("error", { 
-      message: "Error retrieving courses" 
-    });
+    console.error("Database query error:", error);
+    res.status(500).render("error", { message: "Failed to load courses" });
   }
 });
 
-// Add course form
+/**
+ * GET /add-course
+ * shows the form to add a new course
+ */
 app.get("/add-course", (req, res) => {
-  res.render("add-course", { error: null });
+  res.render("add-course", { error: null, values: {} });
 });
 
-// Handle course submission
+/**
+ * POST /add-course
+ * handles form submit and insert course into db
+ */
 app.post("/add-course", async (req, res) => {
-  const { coursecode, coursename, syllabus, progression } = req.body;
-  const errors = [];
-
-  // Validation
-  if (!/^[A-Za-z]{2}\d{4}$/.test(coursecode)) {
-    errors.push("Course code must follow format (e.g. DT207G)");
-  }
-  
-  if (!coursename || coursename.length < 3) {
-    errors.push("Course name must be at least 3 characters");
-  }
-
-  if (!/^https?:\/\//.test(syllabus)) {
-    errors.push("Invalid syllabus URL format");
-  }
-
-  if (!["A", "B"].includes(progression.toUpperCase())) {
-    errors.push("Progression must be A or B");
-  }
-
+  const errors = validateCourseInput(req.body);
   if (errors.length > 0) {
-    return res.render("add-course", { error: errors.join("<br>") });
+    return res.render("add-course", {
+      error: errors.join("<br>"),
+      values: req.body
+    });
   }
 
   try {
-    // Check for existing course
-    const exists = await client.query(
-      "SELECT * FROM courses WHERE coursecode = $1",
-      [coursecode.toUpperCase()]
-    );
-    
-    if (exists.rows.length > 0) {
+    // check if course with same code already exists
+    const existing = await client.query("SELECT * FROM courses WHERE coursecode = $1", [req.body.coursecode.toUpperCase()]);
+    if (existing.rows.length > 0) {
       return res.render("add-course", {
-        error: "Course code already exists"
+        error: "A course with this code already exists.",
+        values: req.body
       });
     }
 
-    // Insert new course
-    await client.query(
-      `INSERT INTO courses 
-      (coursecode, coursename, syllabus, progression)
-      VALUES ($1, $2, $3, $4)`,
-      [
-        coursecode.toUpperCase(),
-        coursename,
-        syllabus,
-        progression.toUpperCase()
-      ]
-    );
-    
+    // if not exist, insert it
+    await insertCourse(req.body);
     res.redirect("/");
   } catch (err) {
-    console.error("Insert error:", err);
-    res.render("add-course", { 
-      error: "Error saving course to database" 
-    });
+    handleDatabaseError(err, res);
   }
 });
 
-// Delete course
-app.post("/delete-course/:id", async (req, res) => {
-  try {
-    await client.query("DELETE FROM courses WHERE id = $1", [req.params.id]);
-    res.redirect("/");
-  } catch (error) {
-    console.error("Delete error:", error);
-    res.status(500).render("error", { 
-      message: "Error deleting course" 
-    });
+// --- helper functions ---
+
+/**
+ * check if course input is valid or not
+ */
+function validateCourseInput(data) {
+  const errors = [];
+  const { coursecode, coursename, syllabus, progression } = data;
+
+  // check code like DT207G
+  if (!/^[A-Z]{2}\d{4}$/.test(coursecode)) {
+    errors.push("Invalid course code format (e.g. DT207G)");
   }
-});
 
-// About page
-app.get("/about", (req, res) => {
-  res.render("about", {
-    dbInfo: {
-      host: process.env.DB_HOST,
-      type: "PostgreSQL"
-    }
-  });
-});
+  if (!coursename?.trim() || coursename.length < 3) {
+    errors.push("Course name must be at least 3 characters");
+  }
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).render("error", { 
-    message: "Internal Server Error" 
-  });
-});
+  if (!syllabus?.startsWith("http")) {
+    errors.push("Invalid syllabus URL format");
+  }
 
-// Start server
+  if (!["A", "B", "C", "D"].includes(progression?.toUpperCase())) {
+    errors.push("Progression must be A, B, C, or D");
+  }
+
+  return errors;
+}
+
+/**
+ * insert the course into the db
+ */
+async function insertCourse(courseData) {
+  const { coursecode, coursename, syllabus, progression } = courseData;
+
+  await client.query(
+    `INSERT INTO courses (coursecode, coursename, syllabus, progression)
+     VALUES ($1, $2, $3, $4)`,
+    [coursecode.toUpperCase(), coursename.trim(), syllabus, progression.toUpperCase()]
+  );
+}
+
+/**
+ * handle db errors and show message
+ */
+function handleDatabaseError(err, res) {
+  console.error("Database error:", err);
+  res.status(500).render("error", { message: "An error occurred while accessing the database." });
+}
+
+// --- start the server ---
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(` Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
+  console.log(`Access: http://localhost:${PORT}`);
 });
