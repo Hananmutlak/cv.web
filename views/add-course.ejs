@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lägg till ny kurs</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Lägg till ny kurs</h1>
+    <%- include("partials/mainnav") %>
+
+    <% if (error) { %>
+      <div class="error-message"><%= error %></div>
+    <% } %>
+
+    <form method="POST">
+      <div class="form-group">
+        <label for="coursecode">Kurskod:</label>
+        <input type="text" id="coursecode" name="coursecode" required minlength="5">
+      </div>
+
+      <div class="form-group">
+        <label for="coursename">Kursnamn:</label>
+        <input type="text" id="coursename" name="coursename" required minlength="3">
+      </div>
+
+      <div class="form-group">
+        <label for="syllabus">Länk till kursplan:</label>
+        <input type="url" id="syllabus" name="syllabus" required>
+      </div>
+
+      <div class="form-group">
+        <label for="progression">Progression:</label>
+        <select id="progression" name="progression" required>
+          <option value="">Välj progression</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+        </select>
+      </div>
+
+      <button type="submit" class="submit-btn">Spara kurs</button>
+    </form>
+  </div>
+</body>
+</html>

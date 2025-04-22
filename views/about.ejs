@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Om systemet</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Om kursadministrationssystemet</h1>
+    <%- include("partials/mainnav") %>
+
+    <section>
+      <h2>Systembeskrivning</h2>
+      <p>Detta system har utvecklats som en del av ett utbildningsprojekt för att hantera kurser. Systemet gör det möjligt att lägga till, visa och ta bort kurser.</p>
+      
+      <h2>Teknisk information</h2>
+      <ul>
+        <li>Serverplattform: Node.js med Express</li>
+        <li>Databas: <%= dbInfo.type %> på <%= dbInfo.host %></li>
+        <li>Användargränssnitt: HTML5, CSS3, EJS</li>
+      </ul>
+    </section>
+  </div>
+</body>
+</html>

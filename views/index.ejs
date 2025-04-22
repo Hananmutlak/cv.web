@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kursadministrationssystem</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Utbildningskurser</h1>
+    <%- include("partials/mainnav") %>
+
+    <% if (courses && courses.length > 0) { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Kurskod</th>
+            <th>Kursnamn</th>
+            <th>Kursplan</th>
+            <th>Progression</th>
+            <th>Åtgärder</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% courses.forEach(course => { %>
+            <tr>
+              <td><%= course.coursecode %></td>
+              <td><%= course.coursename %></td>
+              <td><a href="<%= course.syllabus %>" target="_blank">Visa plan</a></td>
+              <td><%= course.progression %></td>
+              <td>
+                <form action="/delete-course/<%= course.id %>" method="POST" onsubmit="return confirm('Är du säker på att du vill radera den här kursen?')">
+                  <button type="submit" class="delete-btn">Radera</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p>Inga kurser är registrerade ännu.</p>
+    <% } %>
+  </div>
+</body>
+</html>
